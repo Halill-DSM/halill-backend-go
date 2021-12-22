@@ -22,14 +22,14 @@ type TokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type UserDTO struct {
+type UserResponse struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
 }
 
-func UserToDTO(src *ent.User) *UserDTO {
-	return &UserDTO{
+func UserToDTO(src *ent.User) *UserResponse {
+	return &UserResponse{
 		Email:    src.ID,
 		Password: src.Password,
 		Name:     src.Name,
