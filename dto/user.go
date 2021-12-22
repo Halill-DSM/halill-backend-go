@@ -30,7 +30,7 @@ type UserDTO struct {
 
 func UserToDTO(src *ent.User) *UserDTO {
 	return &UserDTO{
-		Email:    src.Email,
+		Email:    src.ID,
 		Password: src.Password,
 		Name:     src.Name,
 	}
