@@ -6,17 +6,17 @@ import (
 )
 
 type CreateTodoRequest struct {
-	Title    string    `json:"title"`
-	Content  string    `json:"content"`
-	Deadline time.Time `json:"deadline"`
+	Title    string     `json:"title"`
+	Content  string     `json:"content"`
+	Deadline *time.Time `json:"deadline,omitempty"`
 }
 
 type TodoResponse struct {
-	ID          int64     `json:"id"`
-	Title       string    `json:"title"`
-	Content     string    `json:"content"`
-	Deadline    time.Time `json:"deadline"`
-	IsCompleted bool      `json:"is_completed"`
+	ID          int64      `json:"id"`
+	Title       string     `json:"title"`
+	Content     string     `json:"content"`
+	Deadline    *time.Time `json:"deadline"`
+	IsCompleted bool       `json:"is_completed"`
 }
 
 func TodoToDTO(src *ent.Todo) *TodoResponse {
