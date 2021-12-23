@@ -1,48 +1,99 @@
 package service
 
 import (
-	"halill/repository/todo"
-	"halill/repository/user"
+	"halill/dto"
+	"halill/ent"
+	"halill/repository"
+	"net/http"
+
+	"github.com/labstack/echo"
 )
 
 type TodoService interface {
-	GetAllTodos()
-	GetTodo()
-	CreateTodo()
-	CompleteTodo()
-	DeleteTodo()
+	GetAllTodos(string) ([]*dto.TodoResponse, error)
+	GetTodo(int64, string) (*dto.TodoResponse, error)
+	CreateTodo(*dto.CreateTodoRequest, string) (*dto.TodoResponse, error)
+	CompleteTodo(int64, string) (*dto.TodoResponse, error)
+	DeleteTodo(int64, string) (*dto.TodoResponse, error)
 }
 
 type todoServiceImpl struct {
-	tr todo.TodoRepository
-	ur user.UserRepository
+	tr repository.TodoRepository
+	ur repository.UserRepository
 }
 
-func (s *todoServiceImpl) GetAllTodos(userId int) {
-	todos := s.tr.GetAllByUserId(userId)
-	return todos
+func NewTodoService(tr repository.TodoRepository, ur repository.UserRepository) TodoService {
+	return &todoServiceImpl{
+		tr: tr,
+		ur: ur,
+	}
 }
 
-func (s *todoServiceImpl) GetTodo(todoId int) {
-	todo := s.tr.GetById(todoId)
-	return todo
+func (s *todoServiceImpl) GetAllTodos(email string) ([]*dto.TodoResponse, error) {
+	todos, err := s.tr.GetAllByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	response := make([]*dto.TodoResponse, 10)
+	for _, t := range todos {
+		response = append(response, dto.TodoToDTO(t))
+	}
+
+	return response, nil
 }
 
-func (s *todoServiceImpl) CreateTodo() {
-	todo := s.tr.Create()
-	return todo
+func (s *todoServiceImpl) GetTodo(todoID int64, email string) (*dto.TodoResponse, error) {
+	todo, err := s.tr.Get(todoID)
+	if todo.Edges.User.ID != email {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.TodoToDTO(todo), nil
 }
 
-func (s *todoServiceImpl) CompleteTodo() {
-	todo := s.tr.Complete()
-	return todo
+func (s *todoServiceImpl) CreateTodo(request *dto.CreateTodoRequest, email string) (*dto.TodoResponse, error) {
+	todo := &ent.Todo{
+		Title:    request.Title,
+		Content:  request.Content,
+		Deadline: request.Deadline,
+		Edges: ent.TodoEdges{
+			User: &ent.User{ID: email},
+		},
+	}
+
+	newTodo, err := s.tr.Create(todo)
+	if err != nil {
+		return nil, err
+	}
+	return dto.TodoToDTO(newTodo), nil
 }
 
-func (s *todoServiceImpl) DeleteTodo() {
-	todo := s.tr.Delete()
-	return todo
+func (s *todoServiceImpl) CompleteTodo(todoID int64, email string) (*dto.TodoResponse, error) {
+	todo, err := s.tr.Complete(todoID)
+	if err != nil {
+		return nil, err
+	}
+
+	if todo.Edges.User.ID != email {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
+	}
+
+	return dto.TodoToDTO(todo), nil
 }
 
-func NewTodoSerice() TodoService {
-	return &todoServiceImpl{}
+func (s *todoServiceImpl) DeleteTodo(todoID int64, email string) (*dto.TodoResponse, error) {
+	todo, err := s.tr.Delete(todoID)
+	if err != nil {
+		return nil, err
+	}
+
+	if todo.Edges.User.ID != email {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
+	}
+
+	return dto.TodoToDTO(todo), nil
 }
