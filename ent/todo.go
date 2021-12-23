@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
 )
 
 // Todo is the model entity for the Todo schema.
@@ -23,13 +22,13 @@ type Todo struct {
 	// Content holds the value of the "content" field.
 	Content string `json:"content,omitempty"`
 	// Deadline holds the value of the "deadline" field.
-	Deadline time.Time `json:"deadline,omitempty"`
+	Deadline *time.Time `json:"deadline,omitempty"`
 	// IsCompleted holds the value of the "is_completed" field.
 	IsCompleted bool `json:"is_completed,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TodoQuery when eager-loading is set.
 	Edges      TodoEdges `json:"edges"`
-	user_todos *uuid.UUID
+	user_todos *string
 }
 
 // TodoEdges holds the relations/edges for other nodes in the graph.
@@ -69,7 +68,7 @@ func (*Todo) scanValues(columns []string) ([]interface{}, error) {
 		case todo.FieldDeadline:
 			values[i] = new(sql.NullTime)
 		case todo.ForeignKeys[0]: // user_todos
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+			values[i] = new(sql.NullString)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Todo", columns[i])
 		}
@@ -107,7 +106,8 @@ func (t *Todo) assignValues(columns []string, values []interface{}) error {
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field deadline", values[i])
 			} else if value.Valid {
-				t.Deadline = value.Time
+				t.Deadline = new(time.Time)
+				*t.Deadline = value.Time
 			}
 		case todo.FieldIsCompleted:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -116,11 +116,11 @@ func (t *Todo) assignValues(columns []string, values []interface{}) error {
 				t.IsCompleted = value.Bool
 			}
 		case todo.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field user_todos", values[i])
 			} else if value.Valid {
-				t.user_todos = new(uuid.UUID)
-				*t.user_todos = *value.S.(*uuid.UUID)
+				t.user_todos = new(string)
+				*t.user_todos = value.String
 			}
 		}
 	}
@@ -159,8 +159,10 @@ func (t *Todo) String() string {
 	builder.WriteString(t.Title)
 	builder.WriteString(", content=")
 	builder.WriteString(t.Content)
-	builder.WriteString(", deadline=")
-	builder.WriteString(t.Deadline.Format(time.ANSIC))
+	if v := t.Deadline; v != nil {
+		builder.WriteString(", deadline=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", is_completed=")
 	builder.WriteString(fmt.Sprintf("%v", t.IsCompleted))
 	builder.WriteByte(')')

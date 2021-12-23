@@ -13,9 +13,9 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "title", Type: field.TypeString},
 		{Name: "content", Type: field.TypeString, Size: 2147483647},
-		{Name: "deadline", Type: field.TypeTime},
+		{Name: "deadline", Type: field.TypeTime, Nullable: true},
 		{Name: "is_completed", Type: field.TypeBool},
-		{Name: "user_todos", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_todos", Type: field.TypeString, Nullable: true},
 	}
 	// TodosTable holds the schema information for the "todos" table.
 	TodosTable = &schema.Table{
@@ -33,7 +33,6 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "oid", Type: field.TypeUUID},
 		{Name: "email", Type: field.TypeString},
 		{Name: "password", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},

@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-
 	"entgo.io/ent"
 )
 
@@ -40,7 +38,7 @@ type TodoMutation struct {
 	deadline      *time.Time
 	is_completed  *bool
 	clearedFields map[string]struct{}
-	user          *uuid.UUID
+	user          *string
 	cleareduser   bool
 	done          bool
 	oldValue      func(context.Context) (*Todo, error)
@@ -221,7 +219,7 @@ func (m *TodoMutation) Deadline() (r time.Time, exists bool) {
 // OldDeadline returns the old "deadline" field's value of the Todo entity.
 // If the Todo object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TodoMutation) OldDeadline(ctx context.Context) (v time.Time, err error) {
+func (m *TodoMutation) OldDeadline(ctx context.Context) (v *time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, fmt.Errorf("OldDeadline is only allowed on UpdateOne operations")
 	}
@@ -235,9 +233,22 @@ func (m *TodoMutation) OldDeadline(ctx context.Context) (v time.Time, err error)
 	return oldValue.Deadline, nil
 }
 
+// ClearDeadline clears the value of the "deadline" field.
+func (m *TodoMutation) ClearDeadline() {
+	m.deadline = nil
+	m.clearedFields[todo.FieldDeadline] = struct{}{}
+}
+
+// DeadlineCleared returns if the "deadline" field was cleared in this mutation.
+func (m *TodoMutation) DeadlineCleared() bool {
+	_, ok := m.clearedFields[todo.FieldDeadline]
+	return ok
+}
+
 // ResetDeadline resets all changes to the "deadline" field.
 func (m *TodoMutation) ResetDeadline() {
 	m.deadline = nil
+	delete(m.clearedFields, todo.FieldDeadline)
 }
 
 // SetIsCompleted sets the "is_completed" field.
@@ -277,7 +288,7 @@ func (m *TodoMutation) ResetIsCompleted() {
 }
 
 // SetUserID sets the "user" edge to the User entity by id.
-func (m *TodoMutation) SetUserID(id uuid.UUID) {
+func (m *TodoMutation) SetUserID(id string) {
 	m.user = &id
 }
 
@@ -292,7 +303,7 @@ func (m *TodoMutation) UserCleared() bool {
 }
 
 // UserID returns the "user" edge ID in the mutation.
-func (m *TodoMutation) UserID() (id uuid.UUID, exists bool) {
+func (m *TodoMutation) UserID() (id string, exists bool) {
 	if m.user != nil {
 		return *m.user, true
 	}
@@ -302,7 +313,7 @@ func (m *TodoMutation) UserID() (id uuid.UUID, exists bool) {
 // UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // UserID instead. It exists only for internal usage by the builders.
-func (m *TodoMutation) UserIDs() (ids []uuid.UUID) {
+func (m *TodoMutation) UserIDs() (ids []string) {
 	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
@@ -446,7 +457,11 @@ func (m *TodoMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *TodoMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(todo.FieldDeadline) {
+		fields = append(fields, todo.FieldDeadline)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -459,6 +474,11 @@ func (m *TodoMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *TodoMutation) ClearField(name string) error {
+	switch name {
+	case todo.FieldDeadline:
+		m.ClearDeadline()
+		return nil
+	}
 	return fmt.Errorf("unknown Todo nullable field %s", name)
 }
 
@@ -563,8 +583,7 @@ type UserMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *uuid.UUID
-	email         *string
+	id            *string
 	password      *string
 	name          *string
 	clearedFields map[string]struct{}
@@ -596,7 +615,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id uuid.UUID) userOption {
+func withUserID(id string) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -648,53 +667,17 @@ func (m UserMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of User entities.
-func (m *UserMutation) SetID(id uuid.UUID) {
+func (m *UserMutation) SetID(id string) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id uuid.UUID, exists bool) {
+func (m *UserMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
 	return *m.id, true
-}
-
-// SetEmail sets the "email" field.
-func (m *UserMutation) SetEmail(s string) {
-	m.email = &s
-}
-
-// Email returns the value of the "email" field in the mutation.
-func (m *UserMutation) Email() (r string, exists bool) {
-	v := m.email
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEmail returns the old "email" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldEmail(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, fmt.Errorf("OldEmail is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, fmt.Errorf("OldEmail requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
-	}
-	return oldValue.Email, nil
-}
-
-// ResetEmail resets all changes to the "email" field.
-func (m *UserMutation) ResetEmail() {
-	m.email = nil
 }
 
 // SetPassword sets the "password" field.
@@ -842,10 +825,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 3)
-	if m.email != nil {
-		fields = append(fields, user.FieldEmail)
-	}
+	fields := make([]string, 0, 2)
 	if m.password != nil {
 		fields = append(fields, user.FieldPassword)
 	}
@@ -860,8 +840,6 @@ func (m *UserMutation) Fields() []string {
 // schema.
 func (m *UserMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case user.FieldEmail:
-		return m.Email()
 	case user.FieldPassword:
 		return m.Password()
 	case user.FieldName:
@@ -875,8 +853,6 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case user.FieldEmail:
-		return m.OldEmail(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
 	case user.FieldName:
@@ -890,13 +866,6 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *UserMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case user.FieldEmail:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEmail(v)
-		return nil
 	case user.FieldPassword:
 		v, ok := value.(string)
 		if !ok {
@@ -960,9 +929,6 @@ func (m *UserMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *UserMutation) ResetField(name string) error {
 	switch name {
-	case user.FieldEmail:
-		m.ResetEmail()
-		return nil
 	case user.FieldPassword:
 		m.ResetPassword()
 		return nil

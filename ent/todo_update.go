@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // TodoUpdate is the builder for updating Todo entities.
@@ -47,6 +46,20 @@ func (tu *TodoUpdate) SetDeadline(t time.Time) *TodoUpdate {
 	return tu
 }
 
+// SetNillableDeadline sets the "deadline" field if the given value is not nil.
+func (tu *TodoUpdate) SetNillableDeadline(t *time.Time) *TodoUpdate {
+	if t != nil {
+		tu.SetDeadline(*t)
+	}
+	return tu
+}
+
+// ClearDeadline clears the value of the "deadline" field.
+func (tu *TodoUpdate) ClearDeadline() *TodoUpdate {
+	tu.mutation.ClearDeadline()
+	return tu
+}
+
 // SetIsCompleted sets the "is_completed" field.
 func (tu *TodoUpdate) SetIsCompleted(b bool) *TodoUpdate {
 	tu.mutation.SetIsCompleted(b)
@@ -54,13 +67,13 @@ func (tu *TodoUpdate) SetIsCompleted(b bool) *TodoUpdate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (tu *TodoUpdate) SetUserID(id uuid.UUID) *TodoUpdate {
+func (tu *TodoUpdate) SetUserID(id string) *TodoUpdate {
 	tu.mutation.SetUserID(id)
 	return tu
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (tu *TodoUpdate) SetNillableUserID(id *uuid.UUID) *TodoUpdate {
+func (tu *TodoUpdate) SetNillableUserID(id *string) *TodoUpdate {
 	if id != nil {
 		tu = tu.SetUserID(*id)
 	}
@@ -176,6 +189,12 @@ func (tu *TodoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: todo.FieldDeadline,
 		})
 	}
+	if tu.mutation.DeadlineCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: todo.FieldDeadline,
+		})
+	}
 	if value, ok := tu.mutation.IsCompleted(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
@@ -192,7 +211,7 @@ func (tu *TodoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -208,7 +227,7 @@ func (tu *TodoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -255,6 +274,20 @@ func (tuo *TodoUpdateOne) SetDeadline(t time.Time) *TodoUpdateOne {
 	return tuo
 }
 
+// SetNillableDeadline sets the "deadline" field if the given value is not nil.
+func (tuo *TodoUpdateOne) SetNillableDeadline(t *time.Time) *TodoUpdateOne {
+	if t != nil {
+		tuo.SetDeadline(*t)
+	}
+	return tuo
+}
+
+// ClearDeadline clears the value of the "deadline" field.
+func (tuo *TodoUpdateOne) ClearDeadline() *TodoUpdateOne {
+	tuo.mutation.ClearDeadline()
+	return tuo
+}
+
 // SetIsCompleted sets the "is_completed" field.
 func (tuo *TodoUpdateOne) SetIsCompleted(b bool) *TodoUpdateOne {
 	tuo.mutation.SetIsCompleted(b)
@@ -262,13 +295,13 @@ func (tuo *TodoUpdateOne) SetIsCompleted(b bool) *TodoUpdateOne {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (tuo *TodoUpdateOne) SetUserID(id uuid.UUID) *TodoUpdateOne {
+func (tuo *TodoUpdateOne) SetUserID(id string) *TodoUpdateOne {
 	tuo.mutation.SetUserID(id)
 	return tuo
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (tuo *TodoUpdateOne) SetNillableUserID(id *uuid.UUID) *TodoUpdateOne {
+func (tuo *TodoUpdateOne) SetNillableUserID(id *string) *TodoUpdateOne {
 	if id != nil {
 		tuo = tuo.SetUserID(*id)
 	}
@@ -408,6 +441,12 @@ func (tuo *TodoUpdateOne) sqlSave(ctx context.Context) (_node *Todo, err error) 
 			Column: todo.FieldDeadline,
 		})
 	}
+	if tuo.mutation.DeadlineCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: todo.FieldDeadline,
+		})
+	}
 	if value, ok := tuo.mutation.IsCompleted(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
@@ -424,7 +463,7 @@ func (tuo *TodoUpdateOne) sqlSave(ctx context.Context) (_node *Todo, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -440,7 +479,7 @@ func (tuo *TodoUpdateOne) sqlSave(ctx context.Context) (_node *Todo, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},

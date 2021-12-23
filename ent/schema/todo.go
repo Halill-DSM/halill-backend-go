@@ -17,7 +17,7 @@ func (Todo) Fields() []ent.Field {
 		field.Int64("id"),
 		field.String("title"),
 		field.Text("content"),
-		field.Time("deadline"),
+		field.Time("deadline").Nillable().Optional(),
 		field.Bool("is_completed"),
 	}
 }

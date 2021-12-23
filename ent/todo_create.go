@@ -12,7 +12,6 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // TodoCreate is the builder for creating a Todo entity.
@@ -40,6 +39,14 @@ func (tc *TodoCreate) SetDeadline(t time.Time) *TodoCreate {
 	return tc
 }
 
+// SetNillableDeadline sets the "deadline" field if the given value is not nil.
+func (tc *TodoCreate) SetNillableDeadline(t *time.Time) *TodoCreate {
+	if t != nil {
+		tc.SetDeadline(*t)
+	}
+	return tc
+}
+
 // SetIsCompleted sets the "is_completed" field.
 func (tc *TodoCreate) SetIsCompleted(b bool) *TodoCreate {
 	tc.mutation.SetIsCompleted(b)
@@ -53,13 +60,13 @@ func (tc *TodoCreate) SetID(i int64) *TodoCreate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (tc *TodoCreate) SetUserID(id uuid.UUID) *TodoCreate {
+func (tc *TodoCreate) SetUserID(id string) *TodoCreate {
 	tc.mutation.SetUserID(id)
 	return tc
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (tc *TodoCreate) SetNillableUserID(id *uuid.UUID) *TodoCreate {
+func (tc *TodoCreate) SetNillableUserID(id *string) *TodoCreate {
 	if id != nil {
 		tc = tc.SetUserID(*id)
 	}
@@ -147,9 +154,6 @@ func (tc *TodoCreate) check() error {
 	if _, ok := tc.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "content"`)}
 	}
-	if _, ok := tc.mutation.Deadline(); !ok {
-		return &ValidationError{Name: "deadline", err: errors.New(`ent: missing required field "deadline"`)}
-	}
 	if _, ok := tc.mutation.IsCompleted(); !ok {
 		return &ValidationError{Name: "is_completed", err: errors.New(`ent: missing required field "is_completed"`)}
 	}
@@ -208,7 +212,7 @@ func (tc *TodoCreate) createSpec() (*Todo, *sqlgraph.CreateSpec) {
 			Value:  value,
 			Column: todo.FieldDeadline,
 		})
-		_node.Deadline = value
+		_node.Deadline = &value
 	}
 	if value, ok := tc.mutation.IsCompleted(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -227,7 +231,7 @@ func (tc *TodoCreate) createSpec() (*Todo, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},

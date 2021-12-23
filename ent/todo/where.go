@@ -419,6 +419,20 @@ func DeadlineLTE(v time.Time) predicate.Todo {
 	})
 }
 
+// DeadlineIsNil applies the IsNil predicate on the "deadline" field.
+func DeadlineIsNil() predicate.Todo {
+	return predicate.Todo(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldDeadline)))
+	})
+}
+
+// DeadlineNotNil applies the NotNil predicate on the "deadline" field.
+func DeadlineNotNil() predicate.Todo {
+	return predicate.Todo(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldDeadline)))
+	})
+}
+
 // IsCompletedEQ applies the EQ predicate on the "is_completed" field.
 func IsCompletedEQ(v bool) predicate.Todo {
 	return predicate.Todo(func(s *sql.Selector) {

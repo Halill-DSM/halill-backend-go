@@ -14,7 +14,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // TodoQuery is the builder for querying Todo entities.
@@ -383,8 +382,8 @@ func (tq *TodoQuery) sqlAll(ctx context.Context) ([]*Todo, error) {
 	}
 
 	if query := tq.withUser; query != nil {
-		ids := make([]uuid.UUID, 0, len(nodes))
-		nodeids := make(map[uuid.UUID][]*Todo)
+		ids := make([]string, 0, len(nodes))
+		nodeids := make(map[string][]*Todo)
 		for i := range nodes {
 			if nodes[i].user_todos == nil {
 				continue
