@@ -8,7 +8,7 @@ type LoginRequest struct {
 }
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh-token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type RegistRequest struct {
@@ -23,15 +23,13 @@ type TokenResponse struct {
 }
 
 type UserResponse struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 func UserToDTO(src *ent.User) *UserResponse {
 	return &UserResponse{
-		Email:    src.ID,
-		Password: src.Password,
-		Name:     src.Name,
+		Email: src.ID,
+		Name:  src.Name,
 	}
 }
