@@ -1,48 +1,115 @@
 package handler
 
 import (
+	"halill/dto"
+	"halill/repository"
+	"halill/security"
 	"halill/service"
+	"strconv"
 
+	"github.com/golang-jwt/jwt"
+	"github.com/google/wire"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/pkg/errors"
 )
+
+var TodoSet = wire.NewSet(NewTodoHandler, service.NewTodoService, repository.NewUserRepository, repository.NewTodoRepository)
 
 type TodoHandler struct {
 	ts service.TodoService
 }
 
-func NewTodoHandler(e *echo.Echo, ts service.TodoService) {
-	handler := &TodoHandler{
+func NewTodoHandler(e *echo.Group, ts service.TodoService, jwtSecret string) TodoHandler {
+	handler := TodoHandler{
 		ts: ts,
 	}
-	e.GET("/todo", handler.GetAllTodos)
-	e.GET("/todo/:todo_id", handler.GetTodo)
+	config := middleware.JWTConfig{
+		Claims:     &security.JwtCustomClaims{},
+		SigningKey: []byte(jwtSecret),
+	}
+	e.Use(middleware.JWTWithConfig(config))
+	e.GET("", handler.GetAllTodos)
+	e.GET("/:todo_id", handler.GetTodo)
 	e.POST("/todo", handler.CreateTodo)
-	e.PATCH("/todo/:todo_id", handler.CompleteTodo)
-	e.DELETE("/todo/:todo_id", handler.DeleteTodo)
+	e.PATCH("/:todo_id", handler.CompleteTodo)
+	e.DELETE("/:todo_id", handler.DeleteTodo)
+
+	return handler
 }
 
-func (h *TodoHandler) GetAllTodos(c echo.Context) {
-	todos := h.ts.GetAllTodos()
-	c.JSON(200, todos)
+func (h *TodoHandler) GetAllTodos(c echo.Context) error {
+	email := c.Get("user").(*jwt.Token).
+		Claims.(*security.JwtCustomClaims).Email
+	todos, err := h.ts.GetAllTodos(email)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return c.JSON(200, todos)
 }
 
-func (h *TodoHandler) GetTodo(c echo.Context) {
-	todo := h.ts.GetTodo(c.Param("todo_id"))
-	c.JSON(200, todo)
+func (h *TodoHandler) GetTodo(c echo.Context) error {
+	email := c.Get("user").(*jwt.Token).
+		Claims.(*security.JwtCustomClaims).Email
+	todoID, err := strconv.ParseInt(c.Param("todo_id"), 10, 64)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	todo, err := h.ts.GetTodo(todoID, email)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return c.JSON(200, todo)
 }
 
-func (h *TodoHandler) CreateTodo(c echo.Context) {
-	todo := h.ts.CreateTodo()
-	c.JSON(200, todo)
+func (h *TodoHandler) CreateTodo(c echo.Context) error {
+	email := c.Get("user").(*jwt.Token).
+		Claims.(*security.JwtCustomClaims).Email
+	request := &dto.CreateTodoRequest{}
+	err := c.Bind(request)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	todo, err := h.ts.CreateTodo(request, email)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return c.JSON(200, todo)
 }
 
-func (h *TodoHandler) CompleteTodo(c echo.Context) {
+func (h *TodoHandler) CompleteTodo(c echo.Context) error {
+	email := c.Get("user").(*jwt.Token).
+		Claims.(*security.JwtCustomClaims).Email
+	todoID, err := strconv.ParseInt(c.Param("todo_id"), 10, 64)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
-	todo := h.ts.CompleteTodo()
-	c.JSON(200, todo)
+	todo, err := h.ts.CompleteTodo(todoID, email)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return c.JSON(200, todo)
 }
 
-func (h *TodoHandler) DeleteTodo(c echo.Context) {
-	todo := h.ts.DeleteTodo()
-	c.JSON(200, todo)
+func (h *TodoHandler) DeleteTodo(c echo.Context) error {
+	email := c.Get("user").(*jwt.Token).
+		Claims.(*security.JwtCustomClaims).Email
+	todoID, err := strconv.ParseInt(c.Param("todo_id"), 10, 64)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	todo, err := h.ts.DeleteTodo(todoID, email)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return c.JSON(200, todo)
 }
