@@ -7,7 +7,7 @@ import (
 	"halill/service"
 
 	"github.com/google/wire"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var UserSet = wire.NewSet(NewUserHandler, service.NewUserSerice, repository.NewUserRepository, security.NewJWTProvider)
@@ -16,8 +16,8 @@ type UserHandler struct {
 	us service.UserService
 }
 
-func NewUserHandler(e *echo.Group, us service.UserService) UserHandler {
-	handler := UserHandler{
+func NewUserHandler(e *echo.Group, us service.UserService) *UserHandler {
+	handler := &UserHandler{
 		us: us,
 	}
 	e.POST("/login", handler.Login)
