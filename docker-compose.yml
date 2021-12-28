@@ -1,0 +1,30 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  app:
+    build: .
+    container_name: halill-app # 컨테이너 이름 설정
+    ports:
+      - "5000:5000"
+    command: /app
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8 # 사용할 이미지
+    restart: always
+    container_name: halill-mysql # 컨테이너 이름 설정
+    ports:
+      - "3306:3306" # 접근 포트 설정
+    environment: # -e 옵션
+      MYSQL_DATABASE: halill
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'
+
+    command: # 명령어 실행
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - halill-mysql-data:/var/lib/mysql
+
+volumes:
+  halill-mysql-data:
