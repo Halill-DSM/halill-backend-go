@@ -12,8 +12,8 @@ import (
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -30,7 +30,7 @@ func init() {
 	}
 }
 
-func InitializeUser(e *echo.Group, db *ent.Client, jwtSecret string) (handler.UserHandler, error) {
+func InitializeUser(e *echo.Group, db *ent.Client, jwtSecret string) (*handler.UserHandler, error) {
 	userRepository := repository.NewUserRepository(db)
 	jwtProvider := security.NewJWTProvider(jwtSecret)
 	userService := service.NewUserSerice(userRepository, jwtProvider)
@@ -38,7 +38,7 @@ func InitializeUser(e *echo.Group, db *ent.Client, jwtSecret string) (handler.Us
 	return userHandler, nil
 }
 
-func InitializeTodo(e *echo.Group, db *ent.Client, jwtSecret string) (handler.TodoHandler, error) {
+func InitializeTodo(e *echo.Group, db *ent.Client, jwtSecret string) (*handler.TodoHandler, error) {
 	todoRepository := repository.NewTodoRepository(db)
 	userRepository := repository.NewUserRepository(db)
 	todoService := service.NewTodoService(todoRepository, userRepository)
@@ -49,13 +49,13 @@ func InitializeTodo(e *echo.Group, db *ent.Client, jwtSecret string) (handler.To
 func main() {
 	dbDriver := viper.GetString("database.driver")
 	dbHost := viper.GetString("database.host")
-	dbPort := viper.GetString("database.port")
+	// dbPort := viper.GetString("database.port")
 	dbUser := viper.GetString("database.user")
 	dbPass := viper.GetString("database.pass")
 	dbName := viper.GetString("database.name")
 	secret := viper.GetString("jwt.secret")
 
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
+	connection := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPass, dbHost, dbName)
 	client, err := ent.Open(dbDriver, connection)
 	if err != nil {
 		log.Fatal(errors.WithStack(err))
