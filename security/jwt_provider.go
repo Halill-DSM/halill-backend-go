@@ -29,7 +29,7 @@ func (j *jwtProvider) GenerateAccessToken(user *ent.User) (string, error) {
 		},
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
-	at, err := accessToken.SignedString([]byte(j.jwtSecret))
+	at, err := accessToken.SignedString([]byte(j.JwtSecret()))
 	if err != nil {
 		return "", err
 	}
@@ -45,7 +45,7 @@ func (j *jwtProvider) GenerateRefreshToken(user *ent.User) (string, error) {
 		},
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
-	at, err := accessToken.SignedString([]byte(j.jwtSecret))
+	at, err := accessToken.SignedString([]byte(j.JwtSecret()))
 	if err != nil {
 		return "", err
 	}

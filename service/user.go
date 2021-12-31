@@ -5,7 +5,6 @@ import (
 	"halill/ent"
 	"halill/repository"
 	"halill/security"
-	"log"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
@@ -13,7 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//go:
 type UserService interface {
 	LoginUser(*dto.LoginRequest) (*dto.TokenResponse, error)
 	RegistUser(*dto.RegistRequest) (*dto.UserResponse, error)
@@ -60,7 +58,6 @@ func (s *userServiceImpl) verifyUser(r *dto.LoginRequest) (*ent.User, error) {
 		return nil, err
 	}
 
-	log.Println(user.Password, r.Password)
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(r.Password))
 	if err != nil {
 		return nil, err
@@ -71,6 +68,7 @@ func (s *userServiceImpl) verifyUser(r *dto.LoginRequest) (*ent.User, error) {
 
 func (s *userServiceImpl) RegistUser(r *dto.RegistRequest) (*dto.UserResponse, error) {
 	_, err := s.ur.GetByEmail(r.Email)
+
 	// 사용자를 못 찾을 시, 유저 생성
 	if _, ok := err.(*ent.NotFoundError); !ok {
 		if err == nil {
@@ -102,7 +100,6 @@ func (s *userServiceImpl) RefreshToken(r *dto.RefreshTokenRequest) (*dto.TokenRe
 	_, err := jwt.ParseWithClaims(r.RefreshToken, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.jp.JwtSecret()), nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

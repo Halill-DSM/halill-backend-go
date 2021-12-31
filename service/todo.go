@@ -19,13 +19,11 @@ type TodoService interface {
 
 type todoServiceImpl struct {
 	tr repository.TodoRepository
-	ur repository.UserRepository
 }
 
-func NewTodoService(tr repository.TodoRepository, ur repository.UserRepository) TodoService {
+func NewTodoService(tr repository.TodoRepository) TodoService {
 	return &todoServiceImpl{
 		tr: tr,
-		ur: ur,
 	}
 }
 
@@ -35,9 +33,9 @@ func (s *todoServiceImpl) GetAllTodos(email string) ([]*dto.TodoResponse, error)
 		return nil, err
 	}
 
-	response := make([]*dto.TodoResponse, 10)
-	for _, t := range todos {
-		response = append(response, dto.TodoToDTO(t))
+	response := make([]*dto.TodoResponse, 0)
+	for _, todo := range todos {
+		response = append(response, dto.TodoToDTO(todo))
 	}
 
 	return response, nil
@@ -45,11 +43,12 @@ func (s *todoServiceImpl) GetAllTodos(email string) ([]*dto.TodoResponse, error)
 
 func (s *todoServiceImpl) GetTodo(todoID int64, email string) (*dto.TodoResponse, error) {
 	todo, err := s.tr.Get(todoID)
-	if todo.Edges.User.ID != email {
-		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
-	}
 	if err != nil {
 		return nil, err
+	}
+
+	if todo.Edges.User.ID != email {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
 	}
 
 	return dto.TodoToDTO(todo), nil
@@ -73,26 +72,36 @@ func (s *todoServiceImpl) CreateTodo(request *dto.CreateTodoRequest, email strin
 }
 
 func (s *todoServiceImpl) CompleteTodo(todoID int64, email string) (*dto.TodoResponse, error) {
-	todo, err := s.tr.Complete(todoID)
+	todo, err := s.tr.Get(todoID)
 	if err != nil {
 		return nil, err
 	}
 
 	if todo.Edges.User.ID != email {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
+	}
+
+	_, err = s.tr.Complete(todoID)
+	if err != nil {
+		return nil, err
 	}
 
 	return dto.TodoToDTO(todo), nil
 }
 
 func (s *todoServiceImpl) DeleteTodo(todoID int64, email string) (*dto.TodoResponse, error) {
-	todo, err := s.tr.Delete(todoID)
+	todo, err := s.tr.Get(todoID)
 	if err != nil {
 		return nil, err
 	}
 
 	if todo.Edges.User.ID != email {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "해당 요청에 대한 권한이 없습니다.")
+	}
+
+	_, err = s.tr.Delete(todoID)
+	if err != nil {
+		return nil, err
 	}
 
 	return dto.TodoToDTO(todo), nil
