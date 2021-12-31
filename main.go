@@ -40,8 +40,7 @@ func InitializeUser(e *echo.Group, db *ent.Client, jwtSecret string) (*handler.U
 
 func InitializeTodo(e *echo.Group, db *ent.Client, jwtSecret string) (*handler.TodoHandler, error) {
 	todoRepository := repository.NewTodoRepository(db)
-	userRepository := repository.NewUserRepository(db)
-	todoService := service.NewTodoService(todoRepository, userRepository)
+	todoService := service.NewTodoService(todoRepository)
 	todoHandler := handler.NewTodoHandler(e, todoService, jwtSecret)
 	return todoHandler, nil
 }
