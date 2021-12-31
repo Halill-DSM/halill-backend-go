@@ -28,12 +28,12 @@ func TestGetAllTodos(t *testing.T) {
 	e := echo.New()
 	g := e.Group("/todo")
 	ts := new(mocks.TodoService)
-	deadline := time.Now().Add(24 * 3 * time.Hour)
 	user := &ent.User{
 		ID:       "hwc9169@gmail.com",
 		Password: "password",
 		Name:     "조호원",
 	}
+	deadline := time.Now().Add(24 * 3 * time.Hour)
 	expectedResponse := []*dto.TodoResponse{
 		{
 			ID:          1,
