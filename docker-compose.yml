@@ -13,8 +13,6 @@ services:
     image: mysql:8 # 사용할 이미지
     restart: always
     container_name: halill-mysql # 컨테이너 이름 설정
-    ports:
-      - "3306:3306" # 접근 포트 설정
     environment: # -e 옵션
       MYSQL_DATABASE: halill
       MYSQL_ROOT_PASSWORD: password

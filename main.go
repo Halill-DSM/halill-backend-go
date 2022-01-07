@@ -54,7 +54,7 @@ func main() {
 	dbName := viper.GetString("database.name")
 	secret := viper.GetString("jwt.secret")
 
-	connection := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPass, dbHost, dbName)
+	connection := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", dbUser, dbPass, dbHost, dbName)
 	client, err := ent.Open(dbDriver, connection)
 	if err != nil {
 		log.Fatal(errors.WithStack(err))
