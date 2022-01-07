@@ -4,6 +4,9 @@ import (
 	"context"
 	"halill/ent"
 	"halill/ent/user"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type UserRepository interface {
@@ -26,6 +29,9 @@ func (ur *userRepositoryImpl) GetByEmail(email string) (*ent.User, error) {
 		Where(user.ID(email)).
 		Only(context.Background())
 	if err != nil {
+		if _, ok := err.(*ent.NotFoundError); ok {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "존재하지 않는 사용자 입니다.")
+		}
 		return nil, err
 	}
 
