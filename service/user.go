@@ -69,11 +69,13 @@ func (s *userServiceImpl) verifyUser(r *dto.LoginRequest) (*ent.User, error) {
 func (s *userServiceImpl) RegistUser(r *dto.RegistRequest) (*dto.UserResponse, error) {
 	_, err := s.ur.GetByEmail(r.Email)
 
-	// 사용자를 못 찾을 시, 유저 생성
-	if _, ok := err.(*ent.NotFoundError); !ok {
-		if err == nil {
-			err = echo.NewHTTPError(http.StatusBadRequest, "이미 사용중인 이메일입니다.")
-		}
+	// 이미 사용중인 이메일이면 실패
+	if err == nil {
+		err = echo.NewHTTPError(http.StatusBadRequest, "이미 사용중인 이메일입니다.")
+		return nil, err
+	}
+	// Notfound 에러가 아니면 실패
+	if _, ok := err.(*echo.HTTPError); !ok {
 		return nil, err
 	}
 
